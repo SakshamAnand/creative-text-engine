@@ -1,6 +1,6 @@
 import gradio as gr
 from model_handler import generate_response
-from prompts import MODES
+from modes import MODES
 
 with gr.Blocks(css="style.css", theme=gr.themes.Base()) as demo:
     with gr.Row():
