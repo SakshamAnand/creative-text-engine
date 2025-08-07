@@ -460,8 +460,9 @@ if not st.session_state.show_chat:
     """, unsafe_allow_html=True)
     
     for title, subtitle in suggestions:
+        suggestion_text = f"{title} {subtitle}"
         st.markdown(f"""
-            <div class="suggestion-card" onclick="fillInput('{title} {subtitle}')">
+            <div class="suggestion-card" onclick="fillInput('{suggestion_text}')">
                 <div class="suggestion-title">{title}</div>
                 <div class="suggestion-subtitle">{subtitle}</div>
             </div>
