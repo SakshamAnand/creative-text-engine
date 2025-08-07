@@ -1,34 +1,67 @@
-import gradio as gr
+import streamlit as st
 from model_handler import generate_response
 from modes import MODES
 
-with gr.Blocks(css="style.css", theme=gr.themes.Base()) as demo:
-    with gr.Row():
-        with gr.Column(scale=0.2):
-            gr.Markdown("# 🧠 Creative Text Engine")
-            new_chat = gr.Button("➕ New Chat")
-            chat_search = gr.Textbox(placeholder="🔍 Search chats", label="Search")
-        with gr.Column(scale=0.8):
-            chatbot = gr.Chatbot(label="Chat", show_label=False)
-            with gr.Row():
-                user_input = gr.Textbox(placeholder="Enter your text...", lines=2, scale=4)
-                mode_dropdown = gr.Dropdown(choices=MODES, value="translate", label="Mode", scale=2)
-                submit_btn = gr.Button("🚀 Generate", scale=1)
-            share_btn = gr.Button("📤 Share this chat")
+# Custom CSS injection
+st.markdown("""
+    <style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #202123;
+        color: white;
+    }
+    .stApp {
+        background-color: #343541;
+    }
+    textarea, input, select {
+        background-color: #40414f !important;
+        color: white !important;
+        border-radius: 10px !important;
+        font-size: 1rem !important;
+    }
+    button {
+        background-color: #10a37f !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+    button:hover {
+        background-color: #0d8c6e !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-    def handle_generate(message, mode, history):
-        if not message:
-            return history
-        reply = generate_response(message, mode)
-        history.append((message, reply))
-        return history
+# Sidebar (left column)
+st.sidebar.markdown("# 🧠 Creative Text Engine")
+if st.sidebar.button("➕ New Chat"):
+    st.session_state.chat_history = []
 
-    submit_btn.click(
-        handle_generate,
-        inputs=[user_input, mode_dropdown, chatbot],
-        outputs=[chatbot]
-    )
+search = st.sidebar.text_input("🔍 Search chats", key="search")
 
-    new_chat.click(lambda: [], None, chatbot)
+# Main content area
+st.markdown("### Chat")
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-demo.launch()
+# Display chat history
+for i, (user_msg, bot_reply) in enumerate(st.session_state.chat_history):
+    st.chat_message("user").write(user_msg)
+    st.chat_message("assistant").write(bot_reply)
+
+# Input section
+with st.container():
+    col1, col2, col3 = st.columns([4, 2, 1])
+    with col1:
+        user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed", key="user_input")
+    with col2:
+        mode = st.selectbox("Mode", MODES, index=MODES.index("translate") if "translate" in MODES else 0)
+    with col3:
+        submit = st.button("🚀 Generate")
+
+# Response generation
+if submit and user_input.strip():
+    reply = generate_response(user_input.strip(), mode)
+    st.session_state.chat_history.append((user_input.strip(), reply))
+    st.experimental_rerun()
+
+# Share button
+st.button("📤 Share this chat")
