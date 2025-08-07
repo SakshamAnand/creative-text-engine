@@ -1,6 +1,6 @@
 import streamlit as st
 from model_handler import generate_response
-from modes import MODES  # MODES is now a dict: {"Display": "internal"}
+from modes import MODES  # MODES is a dict like {"🌍 Translate": "translate"}
 
 # Inject custom CSS
 st.markdown("""
@@ -27,49 +27,51 @@ st.markdown("""
     button:hover {
         background-color: #0d8c6e !important;
     }
+    .sidebar-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding-bottom: 0.5rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.markdown("# 🧠 Creative Text Engine")
+# --- Sidebar ---
+st.sidebar.markdown('<div class="sidebar-title">🧠 Creative Text Engine</div>', unsafe_allow_html=True)
+
 if st.sidebar.button("➕ New Chat"):
     st.session_state.chat_history = []
 
-search = st.sidebar.text_input("🔍 Search chats", key="search")
+search_query = st.sidebar.text_input("🔍 Search chats", key="search_chats")
 
-# Ensure session state
+with st.sidebar.expander("➕ Modes", expanded=False):
+    selected_display = st.radio("Choose mode", list(MODES.keys()), key="mode_radio")
+    selected_mode = MODES[selected_display]
+
+# --- Session State Setup ---
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Main content
+# --- Main Chat Area ---
 st.markdown("### Chat")
 for user_msg, bot_reply in st.session_state.chat_history:
-    st.chat_message("user").write(user_msg)
-    st.chat_message("assistant").write(bot_reply)
+    if search_query.lower() in user_msg.lower() or search_query.lower() in bot_reply.lower():
+        st.chat_message("user").write(user_msg)
+        st.chat_message("assistant").write(bot_reply)
 
-# Input area
+# --- Input Box ---
 with st.container():
-    col1, col2, col3 = st.columns([4, 2, 1])
-
+    col1, col2 = st.columns([6, 1])
     with col1:
         user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed")
-
     with col2:
-        # Display mode names in dropdown
-        mode_display = st.selectbox("Mode", list(MODES.keys()))
-        mode = MODES[mode_display]  # Get internal mode value (e.g., "translate")
+        submit = st.button("🚀")
 
-    with col3:
-        submit = st.button("🚀 Generate")
-
-# Handle submission
+# --- Handle Submit ---
 if submit and user_input.strip():
-    reply = generate_response(user_input.strip(), mode)
-    st.session_state.chat_history.append((user_input.strip(), reply))
-
-    # Force rerun by clearing input using workaround
-    st.experimental_set_query_params(dummy=str(reply))  # Forces rerun safely
+    bot_reply = generate_response(user_input.strip(), selected_mode)
+    st.session_state.chat_history.append((user_input.strip(), bot_reply))
+    st.experimental_set_query_params(force_refresh=str(bot_reply))
     st.rerun()
 
-# Share button
+# --- Share Button ---
 st.button("📤 Share this chat")
