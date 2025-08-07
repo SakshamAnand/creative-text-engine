@@ -2,7 +2,7 @@
 
 A generative AI-powered application that creatively transforms text across languages, styles, and tones — built with open-source LLMs and Streamlit.
 
-⚡ Built during a 24-hour hackathon by Team Creative Coders.
+⚡ Built during a 24-hour hackathon by Team Techtonic Coders.
 
 ---
 
@@ -77,7 +77,7 @@ streamlit run app.py
 ## 🤝 Team
 
 * Saksham Anand – LLM, Prompt Engineering, Backend
-* Teammate 2 – Streamlit UI, Deployment, Integration
+* Rudra Raj Krishna – Streamlit UI, Deployment, Integration
 
 ---
 
