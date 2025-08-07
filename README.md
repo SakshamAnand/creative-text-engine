@@ -1,5 +1,6 @@
 # 🧠 Techtonic AI Creative Text Engine
 
+This app is publicly deployed and is accessible through this [link](https://techtonicai.streamlit.app/)
 A generative AI-powered application that creatively transforms text across languages, styles, and tones — built with open-source LLMs and Streamlit. This project was developed as part of a 24-hour hackathon.
 
 -----
