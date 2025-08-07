@@ -60,8 +60,20 @@ with st.container():
 # Response generation
 if submit and user_input.strip():
     reply = generate_response(user_input.strip(), mode)
+
+    # Ensure chat_history exists
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    # Append new conversation
     st.session_state.chat_history.append((user_input.strip(), reply))
-    st.experimental_rerun()
+
+    # Optionally clear input
+    st.session_state.user_input = ""
+
+    # Trigger rerun
+    st.rerun()
+
 
 # Share button
 st.button("📤 Share this chat")
