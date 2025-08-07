@@ -6,6 +6,25 @@ from modes import MODES  # MODES is now a dict: {"Display": "internal"}
 # Configure page
 st.set_page_config(page_title="Techtonic AI", page_icon="🤖", layout="wide")
 
+# Initialize session state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "is_loading" not in st.session_state:
+    st.session_state.is_loading = False
+
+if "current_mode" not in st.session_state:
+    st.session_state.current_mode = list(MODES.keys())[0]
+
+if "show_chat" not in st.session_state:
+    st.session_state.show_chat = len(st.session_state.chat_history) > 0
+
+if "suggestion_clicked" not in st.session_state:
+    st.session_state.suggestion_clicked = ""
+
+if "trigger_send" not in st.session_state:
+    st.session_state.trigger_send = False
+
 # Inject Gemini-inspired CSS
 st.markdown("""
     <style>
@@ -406,19 +425,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
-if "is_loading" not in st.session_state:
-    st.session_state.is_loading = False
-
-if "current_mode" not in st.session_state:
-    st.session_state.current_mode = list(MODES.keys())[0]
-
-if "show_chat" not in st.session_state:
-    st.session_state.show_chat = len(st.session_state.chat_history) > 0
-
 # Create suggestion cards data
 suggestions = [
     ("Simulate", "a virtual ecosystem"),
@@ -446,6 +452,14 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+# Handle suggestion clicks
+if st.session_state.suggestion_clicked:
+    st.session_state.show_chat = True
+    st.session_state.is_loading = True
+    st.session_state.chat_history.append((st.session_state.suggestion_clicked, ""))
+    st.session_state.suggestion_clicked = ""
+    st.rerun()
+
 # Main content area
 if not st.session_state.show_chat:
     # Welcome screen
@@ -459,16 +473,53 @@ if not st.session_state.show_chat:
             <div class="suggestions">
     """, unsafe_allow_html=True)
     
-    for title, subtitle in suggestions:
+    # Create clickable suggestion cards using Streamlit buttons
+    col1, col2 = st.columns(2)
+    for i, (title, subtitle) in enumerate(suggestions):
         suggestion_text = f"{title} {subtitle}"
-        st.markdown(f"""
-            <div class="suggestion-card" onclick="fillInput('{suggestion_text}')">
-                <div class="suggestion-title">{title}</div>
-                <div class="suggestion-subtitle">{subtitle}</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with col1 if i % 2 == 0 else col2:
+            if st.button(f"{title}\n{subtitle}", key=f"suggestion_{i}", help=suggestion_text, use_container_width=True):
+                st.session_state.suggestion_clicked = suggestion_text
+                st.rerun()
     
     st.markdown("</div></div>", unsafe_allow_html=True)
+    
+    # Add custom styling for suggestion buttons
+    st.markdown("""
+        <style>
+        .stButton > button {
+            background-color: #1e1f20 !important;
+            border: 1px solid #292a2d !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            height: auto !important;
+            white-space: pre-line !important;
+            text-align: left !important;
+            transition: all 0.2s ease !important;
+            color: #e8eaed !important;
+            font-family: 'Google Sans', sans-serif !important;
+        }
+        
+        .stButton > button:hover {
+            background-color: #262729 !important;
+            border-color: #3c4043 !important;
+            transform: translateY(-2px) !important;
+            color: #e8eaed !important;
+        }
+        
+        .stButton > button:focus {
+            background-color: #262729 !important;
+            border-color: #4285f4 !important;
+            color: #e8eaed !important;
+            box-shadow: none !important;
+        }
+        
+        .stButton {
+            margin-bottom: 16px !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
 else:
     # Chat view
     st.markdown(f"""
@@ -504,143 +555,94 @@ else:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Bottom input area (simplified without icons)
-st.markdown(f"""
+# Bottom input area - Use Streamlit's native input with custom styling
+st.markdown("""
     <div class="input-container">
         <div class="input-wrapper">
-            <textarea class="input-field" placeholder="Ask Techtonic AI" id="mainInput" onkeydown="handleKeyDown(event)" oninput="toggleSendButton()"></textarea>
-            <button class="send-button" id="sendBtn" onclick="sendMessage()">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M2 2L14 8L2 14V9L10 8L2 7V2Z"/>
-                </svg>
-            </button>
+""", unsafe_allow_html=True)
+
+# Create input area using Streamlit components
+input_col, button_col = st.columns([10, 1])
+
+with input_col:
+    user_input = st.text_area(
+        "", 
+        placeholder="Ask Techtonic AI",
+        height=50,
+        key="main_input",
+        label_visibility="collapsed"
+    )
+
+with button_col:
+    send_clicked = st.button("Send", key="send_button", use_container_width=True)
+
+st.markdown("""
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# JavaScript for interactions
+# Custom styling for the input components
 st.markdown("""
-    <script>
-    function fillInput(text) {
-        const mainInput = document.getElementById('mainInput');
-        const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
-        
-        if (mainInput) {
-            mainInput.value = text;
-            toggleSendButton();
-        }
-        
-        if (hiddenInput) {
-            hiddenInput.value = text;
-            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        
-        // Auto-trigger send
-        setTimeout(() => {
-            sendMessage();
-        }, 100);
+    <style>
+    .stTextArea > div > div > textarea {
+        background-color: transparent !important;
+        border: none !important;
+        color: #e8eaed !important;
+        font-size: 16px !important;
+        font-family: 'Google Sans', sans-serif !important;
+        resize: none !important;
+        outline: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
-    function toggleSendButton() {
-        const input = document.getElementById('mainInput');
-        const sendBtn = document.getElementById('sendBtn');
-        
-        if (input && sendBtn) {
-            if (input.value.trim()) {
-                sendBtn.classList.add('visible');
-            } else {
-                sendBtn.classList.remove('visible');
-            }
-        }
+    .stTextArea > div > div > textarea::placeholder {
+        color: #9aa0a6 !important;
     }
     
-    function handleKeyDown(event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            sendMessage();
-        }
+    .stTextArea > div {
+        border: none !important;
+        background: transparent !important;
     }
     
-    function sendMessage() {
-        const input = document.getElementById('mainInput');
-        const text = input ? input.value.trim() : '';
-        
-        if (text) {
-            // Update hidden input
-            const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
-            if (hiddenInput) {
-                hiddenInput.value = text;
-                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-            
-            // Trigger button click
-            setTimeout(() => {
-                const hiddenButton = document.querySelector('button[data-testid="baseButton-secondary"]');
-                if (hiddenButton) {
-                    hiddenButton.click();
-                } else {
-                    // Fallback: look for any button with "Send" text
-                    const allButtons = document.querySelectorAll('button');
-                    for (let btn of allButtons) {
-                        if (btn.textContent.includes('Send')) {
-                            btn.click();
-                            break;
-                        }
-                    }
-                }
-            }, 50);
-            
-            // Clear input
-            if (input) {
-                input.value = '';
-                toggleSendButton();
-            }
-        }
+    .stButton > button[data-testid="baseButton-secondary"] {
+        background-color: #4285f4 !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 32px !important;
+        height: 32px !important;
+        color: white !important;
+        padding: 0 !important;
+        min-height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
-    // Auto-resize textarea
-    document.addEventListener('DOMContentLoaded', function() {
-        const textarea = document.getElementById('mainInput');
-        if (textarea) {
-            textarea.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-                toggleSendButton();
-            });
-        }
-    });
+    .stButton > button[data-testid="baseButton-secondary"]:hover {
+        background-color: #1a73e8 !important;
+        transform: scale(1.05) !important;
+    }
     
-    // Sync inputs
-    setInterval(function() {
-        const mainInput = document.getElementById('mainInput');
-        const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
-        
-        if (mainInput && hiddenInput && mainInput.value !== hiddenInput.value) {
-            hiddenInput.value = mainInput.value;
-        }
-    }, 100);
-    </script>
+    /* Hide the input container styling when in chat mode */
+    .stTextArea {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-# Hidden Streamlit components for backend functionality
-col1, col2 = st.columns([8, 1])
-
-with col1:
-    user_input = st.text_area("", height=1, label_visibility="collapsed", key="hidden_input")
-
-with col2:
-    mode_display = st.selectbox("", list(MODES.keys()), key="hidden_mode", label_visibility="collapsed")
-    submit = st.button("Send", key="hidden_submit")
-
-# Handle submission
-if submit and user_input.strip():
-    st.session_state.show_chat = True
-    st.session_state.is_loading = True
-    
-    # Add user message
-    st.session_state.chat_history.append((user_input.strip(), ""))
-    st.rerun()
+# Handle form submission
+if (send_clicked and user_input.strip()) or st.session_state.trigger_send:
+    if user_input.strip() or st.session_state.trigger_send:
+        st.session_state.show_chat = True
+        st.session_state.is_loading = True
+        
+        # Add user message
+        message_text = user_input.strip() if user_input.strip() else st.session_state.suggestion_clicked
+        st.session_state.chat_history.append((message_text, ""))
+        st.session_state.trigger_send = False
+        st.rerun()
 
 # Generate response if needed
 if st.session_state.chat_history and st.session_state.chat_history[-1][1] == "" and not st.session_state.is_loading:
@@ -654,3 +656,24 @@ if st.session_state.chat_history and st.session_state.chat_history[-1][1] == "" 
     st.session_state.chat_history[-1] = (user_msg, reply)
     st.session_state.is_loading = False
     st.rerun()
+
+# Add JavaScript for Enter key handling
+st.markdown("""
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const textArea = document.querySelector('textarea[data-testid="stTextArea"]');
+        
+        if (textArea) {
+            textArea.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    const sendButton = document.querySelector('button[data-testid="baseButton-secondary"]');
+                    if (sendButton && this.value.trim()) {
+                        sendButton.click();
+                    }
+                }
+            });
+        }
+    });
+    </script>
+""", unsafe_allow_html=True)
