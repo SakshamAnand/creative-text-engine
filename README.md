@@ -1,6 +1,4 @@
-Of course, here is the updated, highly detailed README.md for the "Creative Text Engine" project, incorporating the additional details you provided.
-
-# 🧠 Creative Text Engine
+# 🧠 Techtonic AI Creative Text Engine
 
 A generative AI-powered application that creatively transforms text across languages, styles, and tones — built with open-source LLMs and Streamlit. This project was developed as part of a 24-hour hackathon.
 
@@ -112,6 +110,15 @@ This data-driven approach allowed us to craft prompts that consistently produce 
 
   - **Saksham Anand**: LLM, Prompt Engineering, Backend
   - **Rudra Raj Krishna**: Streamlit UI, Deployment, Integration
+  - **Vasu Arya**: Sentence Transformer, Testing
+  - **Ashwin Singh Slathia**: Testing & Debugging
+    
+-----
+## Declaration
+
+We, the members of Team Techtonic Plates, hereby formally declare that all code, content, and other materials submitted in this repository were created entirely by our team during the 24-hour duration of the hackathon.
+
+We affirm that no external assistance—whether in the form of code, design, or consultation—was received during the course of the event. All work reflects the original efforts and contributions of our team members alone.
 
 -----
 
