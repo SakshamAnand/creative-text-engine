@@ -1,17 +1,26 @@
 import streamlit as st
 from model_handler import generate_response
-from modes import MODES  # MODES is a dict like {"🌍 Translate": "translate"}
+from modes import MODES  # {"Translate": "translate", ...}
 
-# Inject custom CSS
+# Inject custom CSS for layout styling
 st.markdown("""
     <style>
-    body {
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #202123;
-        color: white;
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
-    .stApp {
+    .chat-input-container {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
         background-color: #343541;
+        padding: 1rem 1rem 0.5rem 1rem;
+        border-top: 1px solid #555;
+    }
+    .chat-scroll-area {
+        max-height: calc(100vh - 170px);
+        overflow-y: auto;
+        padding-bottom: 8rem;
     }
     textarea, input, select {
         background-color: #40414f !important;
@@ -27,51 +36,45 @@ st.markdown("""
     button:hover {
         background-color: #0d8c6e !important;
     }
-    .sidebar-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        padding-bottom: 0.5rem;
-    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar ---
-st.sidebar.markdown('<div class="sidebar-title">🧠 Creative Text Engine</div>', unsafe_allow_html=True)
-
+# Sidebar with options
+st.sidebar.markdown("# 🧠 Creative Text Engine")
 if st.sidebar.button("➕ New Chat"):
     st.session_state.chat_history = []
 
-search_query = st.sidebar.text_input("🔍 Search chats", key="search_chats")
+st.sidebar.text_input("🔍 Search chats", key="search")
+st.sidebar.button("📤 Share this chat")
 
-with st.sidebar.expander("➕ Modes", expanded=False):
-    selected_display = st.radio("Choose mode", list(MODES.keys()), key="mode_radio")
-    selected_mode = MODES[selected_display]
-
-# --- Session State Setup ---
+# Initialize chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- Main Chat Area ---
+# Main chat area
 st.markdown("### Chat")
-for user_msg, bot_reply in st.session_state.chat_history:
-    if search_query.lower() in user_msg.lower() or search_query.lower() in bot_reply.lower():
+with st.container():
+    st.markdown('<div class="chat-scroll-area">', unsafe_allow_html=True)
+
+    for user_msg, bot_reply in st.session_state.chat_history:
         st.chat_message("user").write(user_msg)
         st.chat_message("assistant").write(bot_reply)
 
-# --- Input Box ---
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Chat input area at the bottom
 with st.container():
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed")
-    with col2:
-        submit = st.button("🚀")
+    st.markdown('<div class="chat-input-container">', unsafe_allow_html=True)
+    with st.form("chat_form", clear_on_submit=True):
+        user_input = st.text_area("Enter your message", height=80, label_visibility="collapsed")
+        mode_display = st.selectbox("Choose mode", list(MODES.keys()))
+        submitted = st.form_submit_button("🚀 Send")
 
-# --- Handle Submit ---
-if submit and user_input.strip():
-    bot_reply = generate_response(user_input.strip(), selected_mode)
-    st.session_state.chat_history.append((user_input.strip(), bot_reply))
-    st.experimental_set_query_params(force_refresh=str(bot_reply))
-    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Share Button ---
-st.button("📤 Share this chat")
+# Handle submission
+if submitted and user_input.strip():
+    mode = MODES[mode_display]
+    reply = generate_response(user_input.strip(), mode)
+    st.session_state.chat_history.append((user_input.strip(), reply))
+    st.experimental_rerun()
