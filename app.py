@@ -1,10 +1,10 @@
 import streamlit as st
 import json
-import datetime
+from datetime import datetime
 from model_handler import generate_response
-from modes import MODES  # dict like {"Chat": "chat", "Translate": "translate"}
+from modes import MODES  # MODES is now a dict: {"Display": "internal"}
 
-# ------------------ Custom CSS ------------------
+# ---------- Custom CSS ----------
 st.markdown("""
     <style>
     body {
@@ -32,61 +32,53 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ------------------ Session State Init ------------------
+# ---------- Ensure session state ----------
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []  # current chat
-if "saved_chats" not in st.session_state:
-    st.session_state.saved_chats = {}  # {chat_name: [(user, bot), ...]}
+    st.session_state.chat_history = []
+if "search_query" not in st.session_state:
+    st.session_state.search_query = ""
 
-# ------------------ Sidebar ------------------
+# ---------- Sidebar ----------
 st.sidebar.markdown("# 🧠 Creative Text Engine")
 
-# New chat
+# New chat button
 if st.sidebar.button("➕ New Chat"):
-    if st.session_state.chat_history:
-        name = f"Chat {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        st.session_state.saved_chats[name] = st.session_state.chat_history
     st.session_state.chat_history = []
 
-# Search bar
-search_query = st.sidebar.text_input("🔍 Search saved chats")
+# Search chats
+st.session_state.search_query = st.sidebar.text_input("🔍 Search chats", value=st.session_state.search_query)
 
-# Display saved chats
-st.sidebar.markdown("### 📜 Saved Chats")
-filtered_chats = {name: hist for name, hist in st.session_state.saved_chats.items()
-                  if search_query.lower() in name.lower()}
-for chat_name in filtered_chats:
-    if st.sidebar.button(chat_name):
-        st.session_state.chat_history = st.session_state.saved_chats[chat_name]
+# Export chats
+if st.session_state.chat_history:
+    export_data = "\n\n".join(
+        [f"User: {u}\nBot: {b}" for u, b in st.session_state.chat_history]
+    )
+    st.sidebar.download_button(
+        label="📥 Export Chat",
+        data=export_data,
+        file_name=f"chat_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+        mime="text/plain"
+    )
 
-# Export current chat
-if st.sidebar.button("💾 Export Current Chat"):
-    if st.session_state.chat_history:
-        export_data = json.dumps(st.session_state.chat_history, indent=2)
-        st.sidebar.download_button("Download JSON", export_data, file_name="chat_history.json")
-    else:
-        st.sidebar.warning("No chat to export.")
+# Clear chat button
+if st.sidebar.button("🗑 Clear Chat"):
+    st.session_state.chat_history = []
 
-# Import chat
-uploaded_chat = st.sidebar.file_uploader("📂 Import Chat (JSON)", type="json")
-if uploaded_chat:
-    try:
-        imported_history = json.load(uploaded_chat)
-        if isinstance(imported_history, list):
-            st.session_state.chat_history = imported_history
-            st.sidebar.success("Chat imported successfully.")
-        else:
-            st.sidebar.error("Invalid chat format.")
-    except Exception as e:
-        st.sidebar.error(f"Error loading file: {e}")
-
-# ------------------ Main Chat Display ------------------
+# ---------- Main Chat Display ----------
 st.markdown("### Chat")
-for user_msg, bot_reply in st.session_state.chat_history:
+filtered_history = st.session_state.chat_history
+if st.session_state.search_query:
+    filtered_history = [
+        (u, b) for u, b in st.session_state.chat_history
+        if st.session_state.search_query.lower() in u.lower()
+        or st.session_state.search_query.lower() in b.lower()
+    ]
+
+for user_msg, bot_reply in filtered_history:
     st.chat_message("user").write(user_msg)
     st.chat_message("assistant").write(bot_reply)
 
-# ------------------ Input Area ------------------
+# ---------- Input area ----------
 with st.container():
     col1, col2, col3 = st.columns([4, 2, 1])
 
@@ -95,20 +87,14 @@ with st.container():
 
     with col2:
         mode_display = st.selectbox("Mode", list(MODES.keys()))
-        mode = MODES[mode_display]
+        mode = MODES[mode_display]  # Internal mode value
 
     with col3:
         submit = st.button("🚀 Generate")
 
-# ------------------ Handle Submission ------------------
+# ---------- Handle submission ----------
 if submit and user_input.strip():
     reply = generate_response(user_input.strip(), mode)
     st.session_state.chat_history.append((user_input.strip(), reply))
-    st.experimental_rerun()
-
-# ------------------ Share Current Chat ------------------
-if st.button("📤 Share this chat"):
-    if st.session_state.chat_history:
-        st.code(json.dumps(st.session_state.chat_history, indent=2), language="json")
-    else:
-        st.warning("No chat to share.")
+    st.experimental_set_query_params(dummy=str(reply))  # Force refresh
+    st.rerun()
