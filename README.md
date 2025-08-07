@@ -81,7 +81,7 @@ The Creative Text Engine is a web application built with **Streamlit** that allo
 
 ### Prompt Engineering and Testing
 
-A critical component of this project was the development of highly optimized prompts to ensure the integrity of the user's input. We conducted extensive testing with over **1,000 prompts** to fine-tune the instructions given to the AI for each specific task.
+A critical component of this project was the development of highly optimized prompts to ensure the integrity of the user's input. We conducted extensive testing with over **150 prompts** to fine-tune the instructions given to the AI for each specific task.
 
 Our primary objective was to ensure that the **tone and context** of the user's input were preserved throughout the transformation process. To achieve this, we implemented a rigorous testing methodology:
 
