@@ -521,18 +521,35 @@ st.markdown(f"""
 st.markdown("""
     <script>
     function fillInput(text) {
-        document.getElementById('mainInput').value = text;
-        toggleSendButton();
+        const mainInput = document.getElementById('mainInput');
+        const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
+        
+        if (mainInput) {
+            mainInput.value = text;
+            toggleSendButton();
+        }
+        
+        if (hiddenInput) {
+            hiddenInput.value = text;
+            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        // Auto-trigger send
+        setTimeout(() => {
+            sendMessage();
+        }, 100);
     }
     
     function toggleSendButton() {
         const input = document.getElementById('mainInput');
         const sendBtn = document.getElementById('sendBtn');
         
-        if (input.value.trim()) {
-            sendBtn.classList.add('visible');
-        } else {
-            sendBtn.classList.remove('visible');
+        if (input && sendBtn) {
+            if (input.value.trim()) {
+                sendBtn.classList.add('visible');
+            } else {
+                sendBtn.classList.remove('visible');
+            }
         }
     }
     
@@ -545,35 +562,63 @@ st.markdown("""
     
     function sendMessage() {
         const input = document.getElementById('mainInput');
-        const text = input.value.trim();
+        const text = input ? input.value.trim() : '';
         
         if (text) {
-            // Trigger Streamlit form submission
-            const hiddenInput = document.querySelector('textarea[data-testid]');
+            // Update hidden input
+            const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
             if (hiddenInput) {
                 hiddenInput.value = text;
                 hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
             
             // Trigger button click
-            const hiddenButton = document.querySelector('button[data-testid]');
-            if (hiddenButton) {
-                hiddenButton.click();
-            }
+            setTimeout(() => {
+                const hiddenButton = document.querySelector('button[data-testid="baseButton-secondary"]');
+                if (hiddenButton) {
+                    hiddenButton.click();
+                } else {
+                    // Fallback: look for any button with "Send" text
+                    const allButtons = document.querySelectorAll('button');
+                    for (let btn of allButtons) {
+                        if (btn.textContent.includes('Send')) {
+                            btn.click();
+                            break;
+                        }
+                    }
+                }
+            }, 50);
             
-            input.value = '';
-            toggleSendButton();
+            // Clear input
+            if (input) {
+                input.value = '';
+                toggleSendButton();
+            }
         }
     }
     
     // Auto-resize textarea
-    const textarea = document.getElementById('mainInput');
-    if (textarea) {
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.getElementById('mainInput');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                toggleSendButton();
+            });
+        }
+    });
+    
+    // Sync inputs
+    setInterval(function() {
+        const mainInput = document.getElementById('mainInput');
+        const hiddenInput = document.querySelector('textarea[data-testid="stTextArea"]');
+        
+        if (mainInput && hiddenInput && mainInput.value !== hiddenInput.value) {
+            hiddenInput.value = mainInput.value;
+        }
+    }, 100);
     </script>
 """, unsafe_allow_html=True)
 
