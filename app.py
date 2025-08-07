@@ -12,7 +12,7 @@ with gr.Blocks(css="style.css", theme=gr.themes.Base()) as demo:
             chatbot = gr.Chatbot(label="Chat", show_label=False)
             with gr.Row():
                 user_input = gr.Textbox(placeholder="Enter your text...", lines=2, scale=4)
-                mode_dropdown = gr.Dropdown(choices=MODES, value="Translate", label="Mode", scale=2)
+                mode_dropdown = gr.Dropdown(choices=MODES, value="translate", label="Mode", scale=2)
                 submit_btn = gr.Button("🚀 Generate", scale=1)
             share_btn = gr.Button("📤 Share this chat")
 
