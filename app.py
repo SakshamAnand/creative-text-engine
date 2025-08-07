@@ -240,50 +240,6 @@ st.markdown("""
         color: #9aa0a6;
     }
     
-    /* Mode icons */
-    .mode-icons {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-    }
-    
-    .mode-icons:hover {
-        opacity: 1;
-    }
-    
-    .mode-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background-color: transparent;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: #9aa0a6;
-        font-size: 18px;
-    }
-    
-    .mode-icon:hover {
-        background-color: #292a2d;
-        color: #e8eaed;
-    }
-    
-    .mode-icon.active {
-        background-color: #4285f4;
-        color: white;
-    }
-    
-    .add-icon {
-        color: #4285f4 !important;
-        font-weight: 500;
-        font-size: 20px;
-    }
-    
     .send-button {
         width: 32px;
         height: 32px;
@@ -547,30 +503,11 @@ else:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Mode icons mapping
-mode_icons = {
-    "Video": "📹",
-    "Deep Research": "🔬", 
-    "Canvas": "🎨",
-    "Image": "🖼️",
-    "Guided Learning": "📚"
-}
-
-# Bottom input area
-mode_icons_html = ""
-for mode, icon in list(mode_icons.items())[:5]:  # Show first 5 modes
-    active_class = "active" if mode == st.session_state.current_mode else ""
-    mode_icons_html += f'<button class="mode-icon {active_class}" title="{mode}" onclick="selectMode(\'{mode}\')">{icon}</button>'
-
+# Bottom input area (simplified without icons)
 st.markdown(f"""
     <div class="input-container">
         <div class="input-wrapper">
             <textarea class="input-field" placeholder="Ask Techtonic AI" id="mainInput" onkeydown="handleKeyDown(event)" oninput="toggleSendButton()"></textarea>
-            <div class="mode-icons">
-                <button class="mode-icon add-icon">+</button>
-                {mode_icons_html}
-                <button class="mode-icon">🎤</button>
-            </div>
             <button class="send-button" id="sendBtn" onclick="sendMessage()">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M2 2L14 8L2 14V9L10 8L2 7V2Z"/>
@@ -627,11 +564,6 @@ st.markdown("""
             input.value = '';
             toggleSendButton();
         }
-    }
-    
-    function selectMode(mode) {
-        // Update mode selection logic here
-        console.log('Selected mode:', mode);
     }
     
     // Auto-resize textarea
