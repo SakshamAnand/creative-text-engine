@@ -1,4 +1,5 @@
 MODES = {
+    "Chat": "chat",
     "Translate": "translate",
     "Poemify": "poem",
     "Songify": "song",
