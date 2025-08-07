@@ -1,0 +1,22 @@
+name: Sync to Hugging Face hub # A name for your workflow
+
+on:
+  push:
+    branches: [main] # Trigger the workflow on pushes to the main branch
+  workflow_dispatch: # Optionally, enable manual triggering from the Actions tab
+
+jobs:
+  sync-to-hub: # Name of the job
+    runs-on: ubuntu-latest # Specifies the runner environment for the job
+    steps:
+      - uses: actions/checkout@v3 # Checks out the repository
+        with:
+          fetch-depth: 0 # Fetches the entire repository history, crucial for full sync
+          lfs: true # Enables Git LFS support if you have large files
+
+      - name: Push to hub # Defines a step to push changes to the Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }} # Accesses the Hugging Face token from GitHub secrets
+        run: |
+          git remote add space https://huggingface.co/spaces/HF_USERNAME/SPACE_NAME # Adds Hugging Face Space as a remote
+          git push --force space main # Pushes the local main branch to the Space, creating the branch if it doesn't exist
