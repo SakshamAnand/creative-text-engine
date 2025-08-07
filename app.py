@@ -1,64 +1,34 @@
-import streamlit as st
+import gradio as gr
+from model_handler import generate_response
+from prompts import MODES
 
-# Set up the Streamlit page
-st.set_page_config(page_title="Creative Text Engine", page_icon="🧠", layout="centered")
+with gr.Blocks(css="style.css", theme=gr.themes.Base()) as demo:
+    with gr.Row():
+        with gr.Column(scale=0.2):
+            gr.Markdown("# 🧠 Creative Text Engine")
+            new_chat = gr.Button("➕ New Chat")
+            chat_search = gr.Textbox(placeholder="🔍 Search chats", label="Search")
+        with gr.Column(scale=0.8):
+            chatbot = gr.Chatbot(label="Chat", show_label=False)
+            with gr.Row():
+                user_input = gr.Textbox(placeholder="Enter your text...", lines=2, scale=4)
+                mode_dropdown = gr.Dropdown(choices=MODES, value="Translate", label="Mode", scale=2)
+                submit_btn = gr.Button("🚀 Generate", scale=1)
+            share_btn = gr.Button("📤 Share this chat")
 
-# Custom CSS for styling
-st.markdown("""
-    <style>
-        .chatbox {
-            background-color: #1e1e1e;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            margin-top: 1rem;
-        }
-        .mode-button {
-            margin: 0.25rem;
-        }
-        textarea {
-            font-size: 1rem !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
+    def handle_generate(message, mode, history):
+        if not message:
+            return history
+        reply = generate_response(message, mode)
+        history.append((message, reply))
+        return history
 
-# Title and Caption
-st.title("🧠 Creative Text Engine")
-st.caption("A ChatGPT-style GenAI translator and transformer")
+    submit_btn.click(
+        handle_generate,
+        inputs=[user_input, mode_dropdown, chatbot],
+        outputs=[chatbot]
+    )
 
-# Text Input Area
-user_input = st.text_area("Enter your text", height=200)
+    new_chat.click(lambda: [], None, chatbot)
 
-# Mode Buttons
-st.markdown("### Select Mode")
-
-col1, col2, col3 = st.columns(3)
-
-# Use Streamlit buttons to capture mode selection
-selected_mode = None
-with col1:
-    if st.button("🌍 Translate", use_container_width=True):
-        selected_mode = "translate"
-    if st.button("🪶 Poemify", use_container_width=True):
-        selected_mode = "poemify"
-with col2:
-    if st.button("🎵 Songify", use_container_width=True):
-        selected_mode = "songify"
-    if st.button("🔁 Rephrase", use_container_width=True):
-        selected_mode = "rephrase"
-with col3:
-    if st.button("🎭 Shakespeare", use_container_width=True):
-        selected_mode = "shakespeare"
-    if st.button("✍️ Formal/Casual", use_container_width=True):
-        selected_mode = "tone_shift"
-
-# Generate and display output
-if user_input and selected_mode:
-    with st.spinner(f"Generating output in {selected_mode} mode..."):
-        # Placeholder output logic (replace this with actual LLM response)
-        mock_response = f"[{selected_mode.upper()} MODE OUTPUT]\n\nThis is a simulated response for: \n\n\"{user_input}\""
-        
-        # Output
-        st.markdown("#### Output")
-        st.markdown(f"<div class='chatbox'>{mock_response}</div>", unsafe_allow_html=True)
+demo.launch()

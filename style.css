@@ -1,0 +1,27 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #202123;
+    color: white;
+}
+
+.gradio-container {
+    background-color: #343541 !important;
+    color: white;
+}
+
+textarea, input, select {
+    background-color: #40414f !important;
+    color: white;
+    border-radius: 10px;
+    font-size: 1rem !important;
+}
+
+button {
+    background-color: #10a37f !important;
+    color: white !important;
+    border-radius: 8px;
+}
+
+button:hover {
+    background-color: #0d8c6e !important;
+}
