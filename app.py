@@ -1,8 +1,10 @@
 import streamlit as st
+import json
+from datetime import datetime
 from model_handler import generate_response
 from modes import MODES  # MODES is now a dict: {"Display": "internal"}
 
-# Inject custom CSS
+# ---------- Custom CSS ----------
 st.markdown("""
     <style>
     body {
@@ -30,24 +32,53 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
+# ---------- Ensure session state ----------
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "search_query" not in st.session_state:
+    st.session_state.search_query = ""
+
+# ---------- Sidebar ----------
 st.sidebar.markdown("# 🧠 Creative Text Engine")
+
+# New chat button
 if st.sidebar.button("➕ New Chat"):
     st.session_state.chat_history = []
 
-search = st.sidebar.text_input("🔍 Search chats", key="search")
+# Search chats
+st.session_state.search_query = st.sidebar.text_input("🔍 Search chats", value=st.session_state.search_query)
 
-# Ensure session state
-if "chat_history" not in st.session_state:
+# Export chats
+if st.session_state.chat_history:
+    export_data = "\n\n".join(
+        [f"User: {u}\nBot: {b}" for u, b in st.session_state.chat_history]
+    )
+    st.sidebar.download_button(
+        label="📥 Export Chat",
+        data=export_data,
+        file_name=f"chat_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+        mime="text/plain"
+    )
+
+# Clear chat button
+if st.sidebar.button("🗑 Clear Chat"):
     st.session_state.chat_history = []
 
-# Main content
+# ---------- Main Chat Display ----------
 st.markdown("### Chat")
-for user_msg, bot_reply in st.session_state.chat_history:
+filtered_history = st.session_state.chat_history
+if st.session_state.search_query:
+    filtered_history = [
+        (u, b) for u, b in st.session_state.chat_history
+        if st.session_state.search_query.lower() in u.lower()
+        or st.session_state.search_query.lower() in b.lower()
+    ]
+
+for user_msg, bot_reply in filtered_history:
     st.chat_message("user").write(user_msg)
     st.chat_message("assistant").write(bot_reply)
 
-# Input area
+# ---------- Input area ----------
 with st.container():
     col1, col2, col3 = st.columns([4, 2, 1])
 
@@ -55,21 +86,15 @@ with st.container():
         user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed")
 
     with col2:
-        # Display mode names in dropdown
         mode_display = st.selectbox("Mode", list(MODES.keys()))
-        mode = MODES[mode_display]  # Get internal mode value (e.g., "translate")
+        mode = MODES[mode_display]  # Internal mode value
 
     with col3:
         submit = st.button("🚀 Generate")
 
-# Handle submission
+# ---------- Handle submission ----------
 if submit and user_input.strip():
     reply = generate_response(user_input.strip(), mode)
     st.session_state.chat_history.append((user_input.strip(), reply))
-
-    # Force rerun by clearing input using workaround
-    st.experimental_set_query_params(dummy=str(reply))  # Forces rerun safely
+    st.experimental_set_query_params(dummy=str(reply))  # Force refresh
     st.rerun()
-
-# Share button
-st.button("📤 Share this chat")
