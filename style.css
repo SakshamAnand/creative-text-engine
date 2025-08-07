@@ -1,76 +1,159 @@
-/* General Body and App Styling */
+/* --- General Body and App Styling --- */
 body {
     font-family: 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background-color: #1E1E1E; /* A slightly softer black */
-    color: #E0E0E0;
+    background-color: #0d1117;
+    color: #c9d1d9;
 }
 
 .stApp {
-    background-color: #252526;
+    background: #0d1117;
 }
 
-/* Headings and Text */
-h1, h2, h3, h4, h5, h6 {
-    color: #FFFFFF;
+/* --- Header --- */
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-/* Sidebar Styling */
-.css-1d391kg { /* Sidebar */
-    background-color: #2D2D2D;
-    border-right: 1px solid #3E3E3E;
+.header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-bottom: 0.2rem;
 }
 
-/* Text Input and Text Area */
-.stTextInput, .stTextArea {
-    background-color: #3C3C3C;
+.header p {
+    font-size: 1.2rem;
+    color: #8b949e;
+    margin-top: 0;
 }
 
-textarea, input, select {
-    background-color: #3C3C3C !important;
-    color: #E0E0E0 !important;
-    border: 1px solid #555555 !important;
-    border-radius: 8px !important;
-    font-size: 1rem !important;
-    padding: 10px !important;
+
+/* --- Chat Messages --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-textarea:focus, input:focus, select:focus {
-    border-color: #007ACC !important;
-    box-shadow: 0 0 5px rgba(0, 122, 204, 0.5) !important;
-}
-
-/* Button Styling */
-.stButton>button {
-    background-color: #007ACC !important;
-    color: white !important;
-    border-radius: 8px !important;
-    border: none !important;
-    padding: 10px 20px !important;
-    font-size: 1rem !important;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.stButton>button:hover {
-    background-color: #005f9e !important;
-    transform: scale(1.05);
-}
-
-.stButton>button:active {
-    background-color: #004c7d !important;
-    transform: scale(0.98);
-}
-
-/* Chat Messages */
 .stChatMessage {
-    background-color: #3A3A3A;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 12px;
+    background: rgba(45, 52, 62, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.5s ease-out;
 }
 
-/* Radio Buttons in Sidebar */
-.stRadio>label {
-    font-size: 1.1rem !important;
-    font-weight: bold;
-    color: #FFFFFF;
+/* --- Input Bar --- */
+.input-bar-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    z-index: 999;
+}
+
+.input-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: rgba(22, 27, 34, 0.8);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid #30363d;
+}
+
+/* --- Textarea with Gradient Outline --- */
+textarea#user-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: #f0f6fc;
+    font-size: 1rem;
+    height: 24px;
+    max-height: 200px;
+    resize: none;
+    padding: 10px;
+    outline: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+textarea#user-input:focus {
+    border-image: linear-gradient(45deg, #58a6ff, #e91e63) 1;
+}
+
+/* --- Send Button --- */
+#send-button {
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+#send-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#send-button svg {
+    color: #8b949e;
+}
+
+/* --- Mode Selector --- */
+.mode-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.plus-icon {
+    cursor: pointer;
+    font-size: 24px;
+    padding: 0 12px;
+    color: #8b949e;
+    transition: transform 0.3s ease;
+}
+
+.mode-selector:hover .plus-icon {
+    transform: rotate(45deg);
+}
+
+.modes {
+    display: flex;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 10px;
+    background: rgba(30, 36, 42, 0.9);
+    backdrop-filter: blur(15px);
+    border-radius: 12px;
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    border: 1px solid #30363d;
+}
+
+.mode-selector:hover .modes {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.mode-item {
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.mode-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
