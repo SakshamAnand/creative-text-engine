@@ -1,8 +1,8 @@
 import streamlit as st
 from model_handler import generate_response
-from modes import MODES
+from modes import MODES  # MODES is now a dict: {"Display": "internal"}
 
-# Custom CSS injection
+# Inject custom CSS
 st.markdown("""
     <style>
     body {
@@ -30,46 +30,46 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar (left column)
+# Sidebar
 st.sidebar.markdown("# 🧠 Creative Text Engine")
 if st.sidebar.button("➕ New Chat"):
     st.session_state.chat_history = []
 
 search = st.sidebar.text_input("🔍 Search chats", key="search")
 
-# Main content area
-st.markdown("### Chat")
+# Ensure session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Display chat history
-for i, (user_msg, bot_reply) in enumerate(st.session_state.chat_history):
+# Main content
+st.markdown("### Chat")
+for user_msg, bot_reply in st.session_state.chat_history:
     st.chat_message("user").write(user_msg)
     st.chat_message("assistant").write(bot_reply)
 
-# Input section
 # Input area
 with st.container():
     col1, col2, col3 = st.columns([4, 2, 1])
+
     with col1:
-        st.text_area("Enter your text...", height=80, label_visibility="collapsed", key="user_input")
+        user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed")
+
     with col2:
-        mode = st.selectbox("Mode", MODES, index=MODES.index("translate") if "translate" in MODES else 0)
+        # Display mode names in dropdown
+        mode_display = st.selectbox("Mode", list(MODES.keys()))
+        mode = MODES[mode_display]  # Get internal mode value (e.g., "translate")
+
     with col3:
         submit = st.button("🚀 Generate")
 
 # Handle submission
-if submit and st.session_state.user_input.strip():
-    reply = generate_response(st.session_state.user_input.strip(), mode)
+if submit and user_input.strip():
+    reply = generate_response(user_input.strip(), mode)
+    st.session_state.chat_history.append((user_input.strip(), reply))
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    st.session_state.chat_history.append((st.session_state.user_input.strip(), reply))
-    st.session_state.user_input = ""  # ✅ now safe!
+    # Force rerun by clearing input using workaround
+    st.experimental_set_query_params(dummy=str(reply))  # Forces rerun safely
     st.rerun()
-
-
 
 # Share button
 st.button("📤 Share this chat")
