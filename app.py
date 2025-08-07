@@ -6,25 +6,6 @@ from modes import MODES  # MODES is now a dict: {"Display": "internal"}
 # Configure page
 st.set_page_config(page_title="Techtonic AI", page_icon="🤖", layout="wide")
 
-# Initialize session state
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
-if "is_loading" not in st.session_state:
-    st.session_state.is_loading = False
-
-if "current_mode" not in st.session_state:
-    st.session_state.current_mode = list(MODES.keys())[0]
-
-if "show_chat" not in st.session_state:
-    st.session_state.show_chat = len(st.session_state.chat_history) > 0
-
-if "suggestion_clicked" not in st.session_state:
-    st.session_state.suggestion_clicked = ""
-
-if "trigger_send" not in st.session_state:
-    st.session_state.trigger_send = False
-
 # Inject Gemini-inspired CSS
 st.markdown("""
     <style>
@@ -57,8 +38,13 @@ st.markdown("""
     .stDeployButton {visibility: hidden;}
     
     /* Hide sidebar */
-    .css-1d391kg {
-        display: none;
+    .css-1d391kg, .css-17eq0hr {
+        display: none !important;
+    }
+    
+    /* Hide all streamlit components */
+    .stTextArea, .stSelectbox, .stButton, .stColumns {
+        display: none !important;
     }
     
     /* Main container */
@@ -135,10 +121,33 @@ st.markdown("""
         font-size: 14px;
     }
     
+    .new-chat-btn {
+        background-color: #1e1f20;
+        border: 1px solid #292a2d;
+        color: #e8eaed;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .new-chat-btn:hover {
+        background-color: #262729;
+        border-color: #3c4043;
+    }
+    
     /* Welcome section */
     .welcome-section {
         text-align: center;
         margin-bottom: 48px;
+        transition: all 0.5s ease;
+    }
+    
+    .welcome-section.hide {
+        opacity: 0;
+        transform: translateY(-20px);
+        pointer-events: none;
     }
     
     .welcome-title {
@@ -165,6 +174,13 @@ st.markdown("""
         margin-bottom: 48px;
         width: 100%;
         max-width: 800px;
+        transition: all 0.5s ease;
+    }
+    
+    .suggestions.hide {
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
     }
     
     .suggestion-card {
@@ -259,6 +275,88 @@ st.markdown("""
         color: #9aa0a6;
     }
     
+    /* Mode icons */
+    .mode-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .mode-controls:hover {
+        opacity: 1;
+    }
+    
+    .mode-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background-color: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #9aa0a6;
+        font-size: 16px;
+        position: relative;
+    }
+    
+    .mode-icon:hover {
+        background-color: #292a2d;
+        color: #e8eaed;
+    }
+    
+    .add-icon {
+        color: #4285f4 !important;
+        font-weight: 500;
+        font-size: 18px;
+    }
+    
+    .voice-icon {
+        font-size: 18px;
+    }
+    
+    /* Mode dropdown */
+    .mode-dropdown {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        background-color: #1e1f20;
+        border: 1px solid #292a2d;
+        border-radius: 12px;
+        padding: 8px;
+        min-width: 200px;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .mode-dropdown.show {
+        display: block;
+        animation: slideUp 0.2s ease-out;
+    }
+    
+    .mode-option {
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        color: #e8eaed;
+    }
+    
+    .mode-option:hover {
+        background-color: #292a2d;
+    }
+    
+    .mode-option.selected {
+        background-color: #4285f4;
+        color: white;
+    }
+    
     .send-button {
         width: 32px;
         height: 32px;
@@ -274,11 +372,13 @@ st.markdown("""
         font-size: 16px;
         opacity: 0;
         transform: scale(0.8);
+        pointer-events: none;
     }
     
     .send-button.visible {
         opacity: 1;
         transform: scale(1);
+        pointer-events: auto;
     }
     
     .send-button:hover {
@@ -337,10 +437,18 @@ st.markdown("""
     
     /* Loading animation */
     .loading {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        max-width: 768px;
+        margin: 0 auto;
         padding: 20px;
+    }
+    
+    .loading-content {
+        background-color: #1e1f20;
+        border: 1px solid #292a2d;
+        border-radius: 18px;
+        border-bottom-left-radius: 6px;
+        padding: 16px 20px;
+        display: inline-block;
     }
     
     .loading-dots {
@@ -372,6 +480,17 @@ st.markdown("""
         }
     }
     
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
     @keyframes pulse {
         0%, 80%, 100% {
             transform: scale(0);
@@ -381,23 +500,6 @@ st.markdown("""
             transform: scale(1);
             opacity: 1;
         }
-    }
-    
-    /* Hide Streamlit components */
-    .stTextArea > div > div > textarea {
-        display: none;
-    }
-    
-    .stSelectbox {
-        display: none;
-    }
-    
-    .stButton {
-        display: none;
-    }
-    
-    .stColumns {
-        display: none;
     }
     
     /* Responsive */
@@ -425,6 +527,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+if "is_loading" not in st.session_state:
+    st.session_state.is_loading = False
+
+if "current_mode" not in st.session_state:
+    st.session_state.current_mode = list(MODES.keys())[0]
+
+if "show_chat" not in st.session_state:
+    st.session_state.show_chat = len(st.session_state.chat_history) > 0
+
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ""
+
 # Create suggestion cards data
 suggestions = [
     ("Simulate", "a virtual ecosystem"),
@@ -446,206 +564,291 @@ st.markdown(f"""
             </div>
         </div>
         <div class="top-right">
+            <button class="new-chat-btn" onclick="newChat()">New chat</button>
             <div class="pro-badge">PRO</div>
             <div class="profile-icon">S</div>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# Handle suggestion clicks
-if st.session_state.suggestion_clicked:
-    st.session_state.show_chat = True
-    st.session_state.is_loading = True
-    st.session_state.chat_history.append((st.session_state.suggestion_clicked, ""))
-    st.session_state.suggestion_clicked = ""
-    st.rerun()
-
 # Main content area
+welcome_class = "hide" if st.session_state.show_chat else ""
+suggestions_class = "hide" if st.session_state.show_chat else ""
+
 if not st.session_state.show_chat:
     # Welcome screen
-    st.markdown("""
+    st.markdown(f"""
         <div class="main-container">
-            <div class="welcome-section">
+            <div class="welcome-section {welcome_class}">
                 <div class="welcome-title">Hello, Saksham</div>
                 <div class="welcome-subtitle">Creative Text Engine</div>
             </div>
             
-            <div class="suggestions">
+            <div class="suggestions {suggestions_class}">
     """, unsafe_allow_html=True)
     
-    # Create clickable suggestion cards using Streamlit buttons
-    col1, col2 = st.columns(2)
-    for i, (title, subtitle) in enumerate(suggestions):
-        suggestion_text = f"{title} {subtitle}"
-        with col1 if i % 2 == 0 else col2:
-            if st.button(f"{title}\n{subtitle}", key=f"suggestion_{i}", help=suggestion_text, use_container_width=True):
-                st.session_state.suggestion_clicked = suggestion_text
-                st.rerun()
+    for title, subtitle in suggestions:
+        st.markdown(f"""
+            <div class="suggestion-card" onclick="fillInput('{title} {subtitle}')">
+                <div class="suggestion-title">{title}</div>
+                <div class="suggestion-subtitle">{subtitle}</div>
+            </div>
+        """, unsafe_allow_html=True)
     
     st.markdown("</div></div>", unsafe_allow_html=True)
-    
-    # Add custom styling for suggestion buttons
+
+# Chat view
+chat_class = "show" if st.session_state.show_chat else ""
+st.markdown(f"""
+    <div class="chat-messages {chat_class}">
+""", unsafe_allow_html=True)
+
+# Display loading if generating
+if st.session_state.is_loading:
     st.markdown("""
-        <style>
-        .stButton > button {
-            background-color: #1e1f20 !important;
-            border: 1px solid #292a2d !important;
-            border-radius: 16px !important;
-            padding: 20px !important;
-            height: auto !important;
-            white-space: pre-line !important;
-            text-align: left !important;
-            transition: all 0.2s ease !important;
-            color: #e8eaed !important;
-            font-family: 'Google Sans', sans-serif !important;
-        }
-        
-        .stButton > button:hover {
-            background-color: #262729 !important;
-            border-color: #3c4043 !important;
-            transform: translateY(-2px) !important;
-            color: #e8eaed !important;
-        }
-        
-        .stButton > button:focus {
-            background-color: #262729 !important;
-            border-color: #4285f4 !important;
-            color: #e8eaed !important;
-            box-shadow: none !important;
-        }
-        
-        .stButton {
-            margin-bottom: 16px !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-else:
-    # Chat view
-    st.markdown(f"""
-        <div class="chat-messages show">
-    """, unsafe_allow_html=True)
-    
-    # Display loading if generating
-    if st.session_state.is_loading:
-        st.markdown("""
-            <div class="loading">
+        <div class="loading">
+            <div class="loading-content">
                 <div class="loading-dots">
                     <div class="loading-dot"></div>
                     <div class="loading-dot"></div>
                     <div class="loading-dot"></div>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
+        </div>
+    """, unsafe_allow_html=True)
+
+# Display messages
+for user_msg, bot_reply in st.session_state.chat_history:
+    st.markdown(f"""
+        <div class="message user">
+            <div class="message-content">{user_msg}</div>
+        </div>
+    """, unsafe_allow_html=True)
     
-    # Display messages
-    for user_msg, bot_reply in st.session_state.chat_history:
+    if bot_reply:
         st.markdown(f"""
-            <div class="message user">
-                <div class="message-content">{user_msg}</div>
+            <div class="message assistant">
+                <div class="message-content">{bot_reply}</div>
             </div>
         """, unsafe_allow_html=True)
-        
-        if bot_reply:
-            st.markdown(f"""
-                <div class="message assistant">
-                    <div class="message-content">{bot_reply}</div>
-                </div>
-            """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 
-# Bottom input area - Use Streamlit's native input with custom styling
-st.markdown("""
+st.markdown("</div>", unsafe_allow_html=True)
+
+# Mode options for dropdown
+mode_options_html = ""
+for mode_key in MODES.keys():
+    selected_class = "selected" if mode_key == st.session_state.current_mode else ""
+    mode_options_html += f'<div class="mode-option {selected_class}" onclick="selectMode(\'{mode_key}\')">{mode_key}</div>'
+
+# Bottom input area
+st.markdown(f"""
     <div class="input-container">
         <div class="input-wrapper">
-""", unsafe_allow_html=True)
-
-# Create input area using Streamlit components
-input_col, button_col = st.columns([10, 1])
-
-with input_col:
-    user_input = st.text_area(
-        "", 
-        placeholder="Ask Techtonic AI",
-        height=50,
-        key="main_input",
-        label_visibility="collapsed"
-    )
-
-with button_col:
-    send_clicked = st.button("Send", key="send_button", use_container_width=True)
-
-st.markdown("""
+            <textarea class="input-field" placeholder="Ask Techtonic AI" id="mainInput" 
+                     onkeydown="handleKeyDown(event)" oninput="toggleSendButton()" 
+                     rows="1"></textarea>
+            <div class="mode-controls">
+                <div class="mode-icon add-icon" onclick="toggleModeDropdown()" style="position: relative;">
+                    +
+                    <div class="mode-dropdown" id="modeDropdown">
+                        {mode_options_html}
+                    </div>
+                </div>
+                <div class="mode-icon voice-icon">🎤</div>
+            </div>
+            <button class="send-button" id="sendBtn" onclick="sendMessage()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 2L14 8L2 14V9L10 8L2 7V2Z"/>
+                </svg>
+            </button>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# Custom styling for the input components
+# JavaScript for interactions
 st.markdown("""
-    <style>
-    .stTextArea > div > div > textarea {
-        background-color: transparent !important;
-        border: none !important;
-        color: #e8eaed !important;
-        font-size: 16px !important;
-        font-family: 'Google Sans', sans-serif !important;
-        resize: none !important;
-        outline: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+    <script>
+    let currentMode = '""" + st.session_state.current_mode + """';
+    
+    function fillInput(text) {
+        const input = document.getElementById('mainInput');
+        input.value = text;
+        input.focus();
+        toggleSendButton();
+        autoResize(input);
     }
     
-    .stTextArea > div > div > textarea::placeholder {
-        color: #9aa0a6 !important;
+    function toggleSendButton() {
+        const input = document.getElementById('mainInput');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        if (input.value.trim()) {
+            sendBtn.classList.add('visible');
+        } else {
+            sendBtn.classList.remove('visible');
+        }
     }
     
-    .stTextArea > div {
-        border: none !important;
-        background: transparent !important;
+    function toggleModeDropdown() {
+        const dropdown = document.getElementById('modeDropdown');
+        dropdown.classList.toggle('show');
     }
     
-    .stButton > button[data-testid="baseButton-secondary"] {
-        background-color: #4285f4 !important;
-        border: none !important;
-        border-radius: 50% !important;
-        width: 32px !important;
-        height: 32px !important;
-        color: white !important;
-        padding: 0 !important;
-        min-height: 32px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    function selectMode(mode) {
+        currentMode = mode;
+        const dropdown = document.getElementById('modeDropdown');
+        dropdown.classList.remove('show');
+        
+        // Update selected option
+        const options = dropdown.querySelectorAll('.mode-option');
+        options.forEach(option => {
+            option.classList.remove('selected');
+            if (option.textContent === mode) {
+                option.classList.add('selected');
+            }
+        });
     }
     
-    .stButton > button[data-testid="baseButton-secondary"]:hover {
-        background-color: #1a73e8 !important;
-        transform: scale(1.05) !important;
+    function handleKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
     }
     
-    /* Hide the input container styling when in chat mode */
-    .stTextArea {
-        margin: 0 !important;
-        padding: 0 !important;
+    function sendMessage() {
+        const input = document.getElementById('mainInput');
+        const text = input.value.trim();
+        
+        if (text) {
+            // Store the message and mode
+            sessionStorage.setItem('pendingMessage', text);
+            sessionStorage.setItem('selectedMode', currentMode);
+            
+            // Clear input
+            input.value = '';
+            toggleSendButton();
+            
+            // Trigger page refresh to process message
+            window.location.reload();
+        }
     }
-    </style>
+    
+    function newChat() {
+        sessionStorage.setItem('newChat', 'true');
+        window.location.reload();
+    }
+    
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+    
+    // Auto-resize textarea
+    const textarea = document.getElementById('mainInput');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            autoResize(this);
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('modeDropdown');
+        const addIcon = event.target.closest('.add-icon');
+        
+        if (!addIcon && dropdown) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Handle pending messages on page load
+    window.addEventListener('load', function() {
+        const pendingMessage = sessionStorage.getItem('pendingMessage');
+        const selectedMode = sessionStorage.getItem('selectedMode');
+        const isNewChat = sessionStorage.getItem('newChat');
+        
+        if (isNewChat) {
+            sessionStorage.removeItem('newChat');
+            // This will be handled by the Python code
+        }
+        
+        if (pendingMessage && selectedMode) {
+            sessionStorage.removeItem('pendingMessage');
+            sessionStorage.removeItem('selectedMode');
+            // This will be handled by the Python code
+        }
+    });
+    </script>
 """, unsafe_allow_html=True)
 
-# Handle form submission
-if (send_clicked and user_input.strip()) or st.session_state.trigger_send:
-    if user_input.strip() or st.session_state.trigger_send:
+# Handle JavaScript messages
+if "pendingMessage" not in st.session_state:
+    st.session_state.pendingMessage = None
+
+if "selectedMode" not in st.session_state:
+    st.session_state.selectedMode = None
+
+# Check for pending message from JavaScript
+js_message = st.query_params.get("msg", [None])[0] if hasattr(st, 'query_params') else None
+
+# Simulate JavaScript communication through session state
+try:
+    import streamlit.components.v1 as components
+    # This is a workaround to get JS values
+    js_result = components.html("""
+        <script>
+        const pendingMessage = sessionStorage.getItem('pendingMessage');
+        const selectedMode = sessionStorage.getItem('selectedMode');
+        const isNewChat = sessionStorage.getItem('newChat');
+        
+        if (isNewChat) {
+            parent.postMessage({type: 'newChat'}, '*');
+            sessionStorage.removeItem('newChat');
+        }
+        
+        if (pendingMessage && selectedMode) {
+            parent.postMessage({
+                type: 'message', 
+                message: pendingMessage, 
+                mode: selectedMode
+            }, '*');
+            sessionStorage.removeItem('pendingMessage');
+            sessionStorage.removeItem('selectedMode');
+        }
+        </script>
+    """, height=0)
+except:
+    pass
+
+# Handle new chat
+if st.button("Hidden New Chat", key="hidden_new_chat"):
+    st.session_state.chat_history = []
+    st.session_state.show_chat = False
+    st.session_state.is_loading = False
+    st.rerun()
+
+# Handle message submission 
+if st.button("Hidden Send", key="hidden_send"):
+    if st.session_state.pendingMessage and st.session_state.selectedMode:
+        message = st.session_state.pendingMessage
+        mode = st.session_state.selectedMode
+        
         st.session_state.show_chat = True
         st.session_state.is_loading = True
+        st.session_state.chat_history.append((message, ""))
         
-        # Add user message
-        message_text = user_input.strip() if user_input.strip() else st.session_state.suggestion_clicked
-        st.session_state.chat_history.append((message_text, ""))
-        st.session_state.trigger_send = False
+        # Clear pending message
+        st.session_state.pendingMessage = None
+        st.session_state.selectedMode = None
+        
         st.rerun()
 
 # Generate response if needed
-if st.session_state.chat_history and st.session_state.chat_history[-1][1] == "" and not st.session_state.is_loading:
+if (st.session_state.chat_history and 
+    st.session_state.chat_history[-1][1] == "" and 
+    st.session_state.is_loading):
+    
     user_msg = st.session_state.chat_history[-1][0]
     mode = MODES[st.session_state.current_mode]
     
@@ -656,24 +859,3 @@ if st.session_state.chat_history and st.session_state.chat_history[-1][1] == "" 
     st.session_state.chat_history[-1] = (user_msg, reply)
     st.session_state.is_loading = False
     st.rerun()
-
-# Add JavaScript for Enter key handling
-st.markdown("""
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const textArea = document.querySelector('textarea[data-testid="stTextArea"]');
-        
-        if (textArea) {
-            textArea.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    const sendButton = document.querySelector('button[data-testid="baseButton-secondary"]');
-                    if (sendButton && this.value.trim()) {
-                        sendButton.click();
-                    }
-                }
-            });
-        }
-    });
-    </script>
-""", unsafe_allow_html=True)
