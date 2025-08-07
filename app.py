@@ -48,31 +48,27 @@ for i, (user_msg, bot_reply) in enumerate(st.session_state.chat_history):
     st.chat_message("assistant").write(bot_reply)
 
 # Input section
+# Input area
 with st.container():
     col1, col2, col3 = st.columns([4, 2, 1])
     with col1:
-        user_input = st.text_area("Enter your text...", height=80, label_visibility="collapsed", key="user_input")
+        st.text_area("Enter your text...", height=80, label_visibility="collapsed", key="user_input")
     with col2:
         mode = st.selectbox("Mode", MODES, index=MODES.index("translate") if "translate" in MODES else 0)
     with col3:
         submit = st.button("🚀 Generate")
 
-# Response generation
-if submit and user_input.strip():
-    reply = generate_response(user_input.strip(), mode)
+# Handle submission
+if submit and st.session_state.user_input.strip():
+    reply = generate_response(st.session_state.user_input.strip(), mode)
 
-    # Ensure chat_history exists
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Append new conversation
-    st.session_state.chat_history.append((user_input.strip(), reply))
-
-    # Optionally clear input
-    st.session_state.user_input = ""
-
-    # Trigger rerun
+    st.session_state.chat_history.append((st.session_state.user_input.strip(), reply))
+    st.session_state.user_input = ""  # ✅ now safe!
     st.rerun()
+
 
 
 # Share button
