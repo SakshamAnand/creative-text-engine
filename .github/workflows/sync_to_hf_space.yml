@@ -1,22 +1,29 @@
-name: Sync to Hugging Face hub # A name for your workflow
+name: Sync to Hugging Face hub
 
 on:
   push:
-    branches: [main] # Trigger the workflow on pushes to the main branch
-  workflow_dispatch: # Optionally, enable manual triggering from the Actions tab
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  sync-to-hub: # Name of the job
-    runs-on: ubuntu-latest # Specifies the runner environment for the job
+  sync-to-hub:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 # Checks out the repository
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Fetches the entire repository history, crucial for full sync
-          lfs: true # Enables Git LFS support if you have large files
+          fetch-depth: 0
+          lfs: true
 
-      - name: Push to hub # Defines a step to push changes to the Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }} # Accesses the Hugging Face token from GitHub secrets
+      - name: Configure Git for Hugging Face
         run: |
-          git remote add space https://huggingface.co/spaces/sakshamanand101/techtonic_creative # Adds Hugging Face Space as a remote
-          git push --force space main # Pushes the local main branch to the Space, creating the branch if it doesn't exist
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git config --global credential.helper store
+          git config --global url."https://sakshamanand101:${HF_TOKEN}@huggingface.co".insteadOf "https://huggingface.co"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Push to Hugging Face Space
+        run: |
+          git remote set-url space https://huggingface.co/spaces/sakshamanand101/techtonic_creative
+          git push --force space main
