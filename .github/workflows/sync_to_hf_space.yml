@@ -18,5 +18,5 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }} # Accesses the Hugging Face token from GitHub secrets
         run: |
-          git remote add space https://huggingface.co/spaces/HF_USERNAME/SPACE_NAME # Adds Hugging Face Space as a remote
+          git remote add space https://huggingface.co/spaces/sakshamanand101/techtonic_creative # Adds Hugging Face Space as a remote
           git push --force space main # Pushes the local main branch to the Space, creating the branch if it doesn't exist
