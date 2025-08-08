@@ -104,7 +104,7 @@ with st.container():
 if submit and user_input.strip():
     reply = generate_response(user_input.strip(), mode)
     st.session_state.chat_history.append((user_input.strip(), reply))
-    st.experimental_rerun()
+    st.rerun()
 
 # ------------------ Share Current Chat ------------------
 if st.button("📤 Share this chat"):
