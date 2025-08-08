@@ -75,7 +75,35 @@ The Creative Text Engine is a web application built with **Streamlit** that allo
 
 5.  **API Integration**: The `model_handler.py` file then makes a POST request to the Gemini API with the generated prompt. The API key is securely loaded from a `.env` file.
 
-6.  **Response Handling**: The application processes the JSON response from the Gemini API, extracts the transformed text, and displays it in the chat interface. Error handling is in place to manage any issues with the API call.
+6.  **Tone Check Integration**: It optionally integrates the sentence-transformers library to calculate a semantic similarity score between the input and output. If the score falls below a defined threshold, it automatically resends the prompt—adjusted to better preserve the original tone and meaning—until the similarity meets the threshold. The code is organized with helper functions for making API calls (_call_gemini) and computing similarity (_semantic_similarity_score), while the main generate_response() function manages prompt creation, response retrieval, similarity validation, and retries, all with robust error handling.
+
+7.  **Response Handling**: The application processes the JSON response from the Gemini API, extracts the transformed text, and displays it in the chat interface. Error handling is in place to manage any issues with the API call.
+
+-----
+
+### 🖥 User Interface
+
+The **Creative Text Engine** comes with a clean, dark-themed UI built with **Streamlit**, designed for an intuitive and productive chat experience. It features:
+
+* **Custom Styling** – A modern, ChatGPT-inspired dark mode with styled inputs, buttons, and dropdowns for a polished look.
+* **Chat History Management** –
+
+  * Start new chats with a single click (`➕ New Chat`).
+  * Automatically save previous chats with timestamps.
+  * Search saved chats by name using the built-in search bar.
+  * Click on any saved chat to instantly reload it into the session.
+* **Import & Export** –
+
+  * Export the current conversation as a **JSON** file (`💾 Export Current Chat`).
+  * Import past conversations from JSON to continue where you left off.
+* **Real-Time Chat** –
+
+  * Displays user messages and AI responses in an easy-to-read conversation format.
+  * Choose from multiple **modes** (e.g., Chat, Translate) via a dropdown powered by the `MODES` dictionary.
+* **Share Functionality** – Share the entire chat as formatted JSON directly in the app for quick collaboration.
+
+This design makes it easy to **create, organize, and revisit AI conversations**—perfect for workflows that require saving and reusing responses.
+
 
 -----
 
