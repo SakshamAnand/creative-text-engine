@@ -135,22 +135,6 @@ This data-driven approach allowed us to craft prompts that consistently produce 
 
 -----
 
-## 🤝 Team
-
-  - **Saksham Anand**: LLM, Prompt Engineering, Backend
-  - **Rudra Raj Krishna**: Streamlit UI, Deployment, Integration
-  - **Vasu Arya**: Sentence Transformer, Testing
-  - **Ashwin Singh Slathia**: Testing & Debugging
-    
------
-## Declaration
-
-We, the members of Team Techtonic Plates, hereby formally declare that all code, content, and other materials submitted in this repository were created entirely by our team during the 24-hour duration of the hackathon.
-
-We affirm that no external assistance—whether in the form of code, design, or consultation—was received during the course of the event. All work reflects the original efforts and contributions of our team members alone.
-
------
-
 ## 📄 License
 
 This project is open source and free to use under the MIT License.
